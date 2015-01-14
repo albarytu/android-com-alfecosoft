@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ip_addr">IP</string>
+    <string name="ip_mask">Mask</string>
+    <string name="ip_first">First</string>
+    <string name="ip_last">Last</string>
+    <string name="ip_range">Range</string>
+    <string name="ip_hostcount">Count</string>
+</resources>

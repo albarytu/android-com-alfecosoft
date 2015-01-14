@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dec">Dec</string>
+    <string name="hex">Hex</string>
+    <string name="bin">Bin</string>
+    <string name="oct">Oct</string>
+</resources>

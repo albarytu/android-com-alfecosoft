@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="color_rgb">RGB</string>
+    <string name="color_red">R</string>
+    <string name="color_green">G</string>
+    <string name="color_blue">B</string>
+</resources>
