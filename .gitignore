@@ -1,7 +1,7 @@
 sdk
-./BaseConverter/app/build
-./BaseConverter/build
-./ColorCalculator/app/build
-./ColorCalculator/build
-./IPCalculator/app/build
-./IPCalculator/build
+BaseConverter/app/build
+BaseConverter/build
+ColorCalculator/app/build
+ColorCalculator/build
+IPCalculator/app/build
+IPCalculator/build
