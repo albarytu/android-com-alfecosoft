@@ -37,7 +37,7 @@ public class IPCalculator extends Activity {
         byte2Keyboard = byte1Keyboard;
         byte3Keyboard = byte1Keyboard;
         byte4Keyboard = new CustomKeyboard(this, R.id.byte4keyboardview, R.xml.lastbit_ipkeyboard);
-        maskKeyboard = new CustomKeyboard(this, R.id.maskkeyboardview, R.xml.maskkeyboard);
+        maskKeyboard = new CustomKeyboard(this, R.id.maskkeyboardview, R.xml.deckeyboard);
 
         byte1 = (EditText) findViewById(R.id.byte1);
         byte1.setFilters(new InputFilter[]{filter});
