@@ -1,6 +1,5 @@
 sdk
 */app/build
 */.gradle
-*/app/*.apk
 */app/*-report.txt
 */build
