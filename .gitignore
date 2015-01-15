@@ -1,7 +1,6 @@
 sdk
-BaseConverter/app/build
-BaseConverter/build
-ColorCalculator/app/build
-ColorCalculator/build
-IPCalculator/app/build
-IPCalculator/build
+*/app/build
+*/.gradle
+*/app/*.apk
+*/app/*-report.txt
+*/build
