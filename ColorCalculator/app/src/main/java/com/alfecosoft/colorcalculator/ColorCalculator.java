@@ -16,11 +16,12 @@ import android.widget.TextView;
 import com.alfecosoft.utils.CharacterFilters.DecimalFilter;
 import com.alfecosoft.utils.CharacterFilters.HexadecimalFilter;
 import com.alfecosoft.utils.CustomKeyboard;
-import com.alfecosoft.utils.DataConversion.Byte;
 
 import static android.widget.SeekBar.OnSeekBarChangeListener;
 
-public class ColorCalculator extends Activity {
+public class ColorCalculator extends Activity
+{
+    private ColorManager mycolor;
 
     private EditText rgbText;
     private EditText redText;
@@ -29,17 +30,24 @@ public class ColorCalculator extends Activity {
     private SeekBar redBar;
     private SeekBar greenBar;
     private SeekBar blueBar;
+
+    private ColorTextWatcher redTextListener;
+    private ColorTextWatcher greenTextListener;
+    private ColorTextWatcher blueTextListener;
+    private ColorBarWatcher redBarListener;
+    private ColorBarWatcher greenBarListener;
+    private ColorBarWatcher blueBarListener;
+    private RGBTextWatcher rgbTextListener;
+
     private SurfaceView surface;
 
     private CustomKeyboard hexKeyboard;
     private CustomKeyboard decKeyboard;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_color_calculator);
-
 
         decKeyboard = new CustomKeyboard(this, R.id.deckeyboardview, R.xml.deckeyboard);
         hexKeyboard = new CustomKeyboard(this, R.id.hexkeyboardview, R.xml.hexkeyboard);
@@ -48,7 +56,6 @@ public class ColorCalculator extends Activity {
 
         rgbText = (EditText) findViewById(R.id.rgb);
         rgbText.setFilters(new InputFilter[]{new HexadecimalFilter()});
-        rgbText.addTextChangedListener(new RGBTextWatcher());
         hexKeyboard.attachToItem(rgbText, 6, false, false);
 
         redText = (EditText) findViewById(R.id.red);
@@ -72,103 +79,79 @@ public class ColorCalculator extends Activity {
         surface = (SurfaceView) findViewById(R.id.surface);
         surface.getHolder().addCallback(new surfacePainter());
 
-        redText.addTextChangedListener(new ColorTextWatcher(RedGreenBlue.RED, redText));
-        greenText.addTextChangedListener(new ColorTextWatcher(RedGreenBlue.GREEN, greenText));
-        blueText.addTextChangedListener(new ColorTextWatcher(RedGreenBlue.BLUE, blueText));
-        redBar.setOnSeekBarChangeListener(new ColorBarWatcher(RedGreenBlue.RED, redBar));
-        greenBar.setOnSeekBarChangeListener(new ColorBarWatcher(RedGreenBlue.GREEN, greenBar));
-        blueBar.setOnSeekBarChangeListener(new ColorBarWatcher(RedGreenBlue.BLUE, blueBar));
+        redTextListener = new ColorTextWatcher(ColorManager.RedGreenBlue.RED, redText);
+        greenTextListener = new ColorTextWatcher(ColorManager.RedGreenBlue.GREEN, greenText);
+        blueTextListener = new ColorTextWatcher(ColorManager.RedGreenBlue.BLUE, blueText);
+        redBarListener = new ColorBarWatcher(ColorManager.RedGreenBlue.RED, redBar);
+        greenBarListener = new ColorBarWatcher(ColorManager.RedGreenBlue.GREEN, greenBar);
+        blueBarListener = new ColorBarWatcher(ColorManager.RedGreenBlue.BLUE, blueBar);
+        rgbTextListener = new RGBTextWatcher();
 
-        rgbText.setText("ffffff");
-    }
+        listenersEnabled=false;
 
-
-    private int color;
-    public int getColor()
-    {
-        return color;
-    }
-    private Object avoidToChangeItem=null;
-    public void setColor(int value)
-    {
-        if (value != this.color) {
-            this.color = value;
-            refreshColor();
-            avoidToChangeItem = null;
-        }
-        paintColor(surface.getHolder());
-    }
-    public int getRed()
-    {
-        return Color.red(this.getColor());
-    }
-    public int getGreen()
-    {
-        return Color.green(this.getColor());
-    }
-    public int getBlue()
-    {
-        return Color.blue(this.getColor());
-    }
-    public void setRGB(int red, int green, int blue)
-    {
-        setColor(Color.rgb(red, green, blue));
-    }
-    public void setRed(int v)
-    {
-        setColor(Color.rgb(v, getGreen(), getBlue()));
-    }
-    public void setGreen(int v)
-    {
-        setColor(Color.rgb(getRed(), v, getBlue()));
-    }
-    public void setBlue(int v)
-    {
-        setColor(Color.rgb(getRed(), getGreen(), v));
+        mycolor = new ColorManager();
+        mycolor.addOnColorChangeListener(new ColorManager.OnColorChangeListener() {
+            @Override
+            public void onColorChange(ColorManager color) {
+                DisableListeners();
+                setTextPreserveSelection(redText,Integer.toString(color.getRed()));
+                setTextPreserveSelection(greenText,Integer.toString(color.getGreen()));
+                setTextPreserveSelection(blueText,Integer.toString(color.getBlue()));
+                redBar.setProgress(color.getRed());
+                greenBar.setProgress(color.getGreen());
+                blueBar.setProgress(color.getBlue());
+                setTextPreserveSelection(rgbText,color.getRGB());
+                EnableListeners();
+                paintColor(surface.getHolder());
+            }
+        });
+        mycolor.setColor(Color.WHITE);
+        EnableListeners();
     }
 
-    public void refreshColor()
-    {
-        if (redText != avoidToChangeItem) {
-            redText.setText(Integer.toString(getRed(), 10));
-        }
-        if (greenText != avoidToChangeItem) {
-            greenText.setText(Integer.toString(getGreen(), 10));
-        }
-        if (blueText != avoidToChangeItem) {
-            blueText.setText(Integer.toString(getBlue(), 10));
-        }
-        if (redBar != avoidToChangeItem) {
-            redBar.setProgress(getRed());
-        }
-        if (greenBar != avoidToChangeItem) {
-            greenBar.setProgress(getGreen());
-        }
-        if (blueBar != avoidToChangeItem) {
-            blueBar.setProgress(getBlue());
-        }
-        if (rgbText != avoidToChangeItem) {
-            rgbText.setText(String.format("%s%s%s", Byte.byteToHex(getRed()), Byte.byteToHex(getGreen()), Byte.byteToHex(getBlue())));
+    private void setTextPreserveSelection(EditText input, String newText) {
+        int s=input.getSelectionStart();
+        int e=input.getSelectionEnd();
+        int max=newText.length();
+        input.setText(newText);
+        if (s>max) { s=max; }
+        if (e>max) { e=max; }
+        input.setSelection(s, e);
+    }
+
+    private boolean listenersEnabled;
+
+    private void EnableListeners() {
+        if (!listenersEnabled) {
+            redText.addTextChangedListener(redTextListener);
+            greenText.addTextChangedListener(greenTextListener);
+            blueText.addTextChangedListener(blueTextListener);
+            redBar.setOnSeekBarChangeListener(redBarListener);
+            greenBar.setOnSeekBarChangeListener(greenBarListener);
+            blueBar.setOnSeekBarChangeListener(blueBarListener);
+            rgbText.addTextChangedListener(rgbTextListener);
+            listenersEnabled=true;
         }
     }
 
-    public int getValueFromText(TextView text)
-    {
-        if (text.getText().toString().length()<=0) {
-            return 0;
+    private void DisableListeners() {
+        if (listenersEnabled) {
+            redText.removeTextChangedListener(redTextListener);
+            greenText.removeTextChangedListener(greenTextListener);
+            blueText.removeTextChangedListener(blueTextListener);
+            redBar.setOnSeekBarChangeListener(null);
+            greenBar.setOnSeekBarChangeListener(null);
+            blueBar.setOnSeekBarChangeListener(null);
+            rgbText.removeTextChangedListener(rgbTextListener);
+            listenersEnabled = false;
         }
-        int r = Integer.valueOf(text.getText().toString(), 10);
-        if (r > 255) {
-            return 255;
-        }
-        return r;
     }
 
     public void paintColor(SurfaceHolder holder) {
         Canvas canvas = holder.lockCanvas();
         if (canvas != null)
         {
-            canvas.drawRGB(this.getRed(), this.getGreen(), this.getBlue());
+            canvas.drawRGB(this.mycolor.getRed(), this.mycolor.getGreen(), this.mycolor.getBlue());
             holder.unlockCanvasAndPost(canvas);
         }
     }
@@ -187,18 +170,12 @@ public class ColorCalculator extends Activity {
         }
     }
 
-    private enum RedGreenBlue
-    {
-        RED,
-        GREEN,
-        BLUE
-    }
 
     private class ColorTextWatcher implements TextWatcher
     {
-        private RedGreenBlue x;
+        private ColorManager.RedGreenBlue x;
         private TextView sender;
-        public ColorTextWatcher(RedGreenBlue x, TextView item)
+        public ColorTextWatcher(ColorManager.RedGreenBlue x, TextView item)
         {
             this.x = x;
             this.sender=item;
@@ -210,24 +187,21 @@ public class ColorCalculator extends Activity {
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count)
         {
-            if (avoidToChangeItem!=null) return;
-            int red=getRed();
-            int green=getGreen();
-            int blue=getBlue();
-            int value=getValueFromText(this.sender);
-            if (value < 255) {
-                avoidToChangeItem = this.sender;
+            String v = this.sender.getText().toString();
+            if (v.length() == 0) {
+                return;
             }
+            int value= Integer.valueOf(v, 10);
             switch (x)
             {
                 case RED:
-                    setRed(value);
+                    mycolor.setRed(value);
                     break;
                 case GREEN:
-                    setGreen(value);
+                    mycolor.setGreen(value);
                     break;
                 case BLUE:
-                    setBlue(value);
+                    mycolor.setBlue(value);
                     break;
             }
         }
@@ -239,9 +213,9 @@ public class ColorCalculator extends Activity {
 
     private class ColorBarWatcher implements OnSeekBarChangeListener
     {
-        private RedGreenBlue x;
+        private ColorManager.RedGreenBlue x;
         private SeekBar sender;
-        public ColorBarWatcher(RedGreenBlue x, SeekBar item)
+        public ColorBarWatcher(ColorManager.RedGreenBlue x, SeekBar item)
         {
             this.sender = item;
             this.x = x;
@@ -249,76 +223,42 @@ public class ColorCalculator extends Activity {
 
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-            if (avoidToChangeItem!=null) return;
-            int red=getRed();
-            int green=getGreen();
-            int blue=getBlue();
             int value=this.sender.getProgress();
             switch (x)
             {
                 case RED:
-                    if (value!=red) {
-                        avoidToChangeItem=this.sender;
-                        setRed(value);
-                    } else {
-                        return;
-                    }
+                    mycolor.setRed(value);
                     break;
                 case GREEN:
-                    if (value!=green) {
-                        avoidToChangeItem=this.sender;
-                        setGreen(value);
-                    } else {
-                        return;
-                    }
+                    mycolor.setGreen(value);
                     break;
                 case BLUE:
-                    if (value!=blue) {
-                        avoidToChangeItem=this.sender;
-                        setBlue(value);
-                    } else {
-                        return;
-                    }
+                    mycolor.setBlue(value);
                     break;
             }
         }
 
         @Override
         public void onStartTrackingTouch(SeekBar seekBar) {
-
         }
 
         @Override
         public void onStopTrackingTouch(SeekBar seekBar) {
-
         }
     }
     private class RGBTextWatcher implements TextWatcher
     {
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
         }
 
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
-            if (avoidToChangeItem!=null) return;
-
-            TextView sender = rgbText;
-            String hex = sender.getText().toString();
-            while (hex.length() < 6) {
-                hex = hex + "0";
-            }
-            long value = Long.valueOf(hex, 16);
-            if (value!=getColor()) {
-                avoidToChangeItem=sender;
-                setColor((int)value);
-            }
+            mycolor.setRGB(rgbText.getText().toString());
         }
 
         @Override
         public void afterTextChanged(Editable s) {
-
         }
     }
 }
